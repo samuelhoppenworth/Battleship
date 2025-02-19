@@ -1,12 +1,14 @@
 from game_engine import Engine
-
+from user_interface import UserInferface
 
 def main():
-    game = Engine()
-    game.run_placement_phase()    
-    game.run_battle_phase()
-    game.declare_winner()
-
+    engine = Engine()
+    ui = UserInferface()
+    ui.print_placement_instructions()
+    # ui.run_placement_phase(engine)
+    ui.run_battle_phase(engine)
+    ui.declare_winner(engine)
+    
 
 if __name__ == "__main__":
     main()
