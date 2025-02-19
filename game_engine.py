@@ -54,7 +54,7 @@ class Placement:
     
 
 class Player:
-    def __init__(self, id: 1):
+    def __init__(self, id):
         self.id = id
         self.hits_received = 0
         self.player_board = [["-" for _ in range(10)] for _ in range(10)]
@@ -88,20 +88,26 @@ class Player:
         return self.inventory
     
     
-    def get_ship_data(self, ship_name): # TODO: error checking
+    def get_ship_data(self, ship_name):
         return self.inventory[ship_name]
     
+            
+    def receive_hit(self, x, y):
+        self.player_board[x][y] = "X"
     
-    def hit_opponent(self, x, y): 
-        self.opponent_board[x][y] = "X"
-    
-        
-    def missed_opponent(self, x, y):
-        self.opponent_board[x][y] = "O"
-
 
     def inc_hits(self):
         self.hits_received += 1
+        
+    
+    def attack(self, opponent: 'Player', x, y):
+        opponent_placements = opponent.get_player_board()
+        if opponent_placements[x][y] == '1':
+            opponent.inc_hits()
+            opponent.receive_hit()
+            self.opponent_board[x][y] = "X"
+        elif opponent_placements[x][y] == '-':
+            self.opponent_board[x][y] = "O"
 
 
     def ship_available(self, placement: Placement):
@@ -229,7 +235,7 @@ class Engine:
     def get_placement(self, user_input: str):
         ship_name, orientation, user_coords = user_input.split()
         internal_x, internal_y = self.convert_coordinates(user_coords)
-        ship_length = self.player1.get_inventory()[ship_name].get_length()
+        ship_length = self.player1.get_ship_data(ship_name).get_length()
         return Placement(name=ship_name, x=internal_x, y=internal_y, length=ship_length, orientation=orientation)
 
     
@@ -266,15 +272,6 @@ class Engine:
                 else:
                     print("Illegal placement. Please try again.")
             os.system('cls' if os.name == 'nt' else 'clear') # Clears terminal output                
-
-
-    def attack(self, attacker: Player, opponent: Player, x, y):
-        opponent_placements = opponent.get_player_board()
-        if opponent_placements[x][y] == '1':
-            opponent.inc_hits()
-            attacker.hit_opponent(x, y)
-        elif opponent_placements[x][y] == '-':
-            attacker.missed_opponent(x, y)
             
             
     def check_game_end(self):
@@ -284,7 +281,6 @@ class Engine:
            
     def run_battle_phase(self):
         game_end = 0
-        
         while not game_end:
             curr_player = self.player1 if self.player1_turn else self.player2
             opponent = self.player1 if not self.player1_turn else self.player2
@@ -292,7 +288,7 @@ class Engine:
             if self.check_coord_format(attack_input):                
                 x, y = self.convert_coordinates(attack_input)
                 if self.check_coord_bounds(x, y): 
-                    self.attack(curr_player, opponent, x, y) # nothing stops player from guessing same square more than once
+                    curr_player.attack(opponent, x, y) # nothing stops player from guessing same square more than once
                     self.player1_turn = not self.player1_turn
                 else:
                     print("Coordinates not in bounds")
@@ -301,3 +297,10 @@ class Engine:
             game_end = self.check_game_end()
             os.system('cls' if os.name == 'nt' else 'clear') # Clears terminal output                
         print("Game end")
+        
+    
+    def declare_winner(self):
+        winner = self.player1 if self.player1.get_hits_taken() == 15 else self.player2
+        print(f"Player {winner.get_id()} wins!")
+        print("\nPlayer 1 board: ")
+        
