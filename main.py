@@ -5,7 +5,7 @@ def main():
     engine = Engine()
     ui = UserInferface()
     ui.print_placement_instructions()
-    # ui.run_placement_phase(engine)
+    ui.run_placement_phase(engine)
     ui.run_battle_phase(engine)
     ui.declare_winner(engine)
     

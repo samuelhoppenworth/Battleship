@@ -1,24 +1,19 @@
 import os
 
-
 class Ship:
     def __init__(self, name, length, num_available):
         self.name = name
         self.length = length
         self.num_available = num_available
 
-        
     def get_name(self):
         return self.name
-
         
     def get_length(self):
         return self.length
 
-
     def get_available(self):
         return self.num_available
-    
     
     def __iter__(self):
         return iter((self.name, self.length, self.num_available))
@@ -32,26 +27,21 @@ class Placement:
         self.orientation = orientation
         self.length = length
         
-        
     def get_coords(self):
         return (self.x, self.y)
-
 
     def get_orientation(self):
         return self.orientation
 
-    
     def get_length(self):
         return self.length
 
-    
     def get_ship_name(self):
         return self.name
-
     
     def __iter__(self):
         return iter((self.name, self.x, self.y, self.length, self.orientation))
-    
+
 
 class Player:
     def __init__(self, id):
@@ -67,37 +57,31 @@ class Player:
             "S" : Ship(name="Submarine", length=1, num_available=2)
         }
     
-    
     def get_id(self):
         return self.id
     
-    
-    def get_hits_taken(self):
+    def get_hits_received(self):
         return self.hits_received
-    
     
     def get_player_board(self):
         return self.player_board
     
-    
     def get_opponent_board(self):
         return self.opponent_board
-    
         
     def get_inventory(self):
         return self.inventory
     
-    
     def get_ship_data(self, ship_name):
         return self.inventory[ship_name]
-    
 
     def ship_available(self, placement: Placement):
+        """Returns true if a ship is available to be placed"""
         ship_name = placement.get_ship_name()
         return (self.inventory[ship_name].num_available > 0)
-
         
     def check_nonoverlap(self, placement: Placement):
+        """Ensures placement does not overlap with existing ships"""
         _, x, y, length, orientation = placement
         for i in range(length):
             if orientation == "V":
@@ -108,8 +92,8 @@ class Player:
                     return False
         return True
         
-        
     def place_ship(self, placement: Placement):
+        """Demarkates a placement with 1s on self.player_board"""
         ship_name, x, y, length, orientation = placement
         for i in range(length):
             if orientation == "V":
@@ -118,16 +102,17 @@ class Player:
                 self.player_board[x][y + i] = '1'
         self.inventory[ship_name].num_available -= 1
         
-    
     def receive_hit(self, x, y):
+        """Marks hit on self.player_board"""
         self.player_board[x][y] = "X"
     
-
     def inc_hits(self):
         self.hits_received += 1
-        
     
     def attack(self, opponent: 'Player', x, y):
+        """Marks hits on the player's representation of opponents board
+        and the opponents representation of their own board. Marks misses 
+        on only the player's representation of the opponents board"""
         opponent_placements = opponent.get_player_board()
         if opponent_placements[x][y] == '1':
             opponent.inc_hits()
@@ -144,64 +129,59 @@ class Engine:
         self.player1 = Player(id=1)
         self.player2 = Player(id=2)
      
-     
     def get_player(self, id): # TODO: input error checking
          return self.player1 if id == 1 else self.player2
-     
      
     def is_player_turn(self, id):
         return self.player1_turn if id == 1 else not self.player1_turn
     
-    
     def pass_turn(self):
         self.player1_turn = not self.player1_turn
-     
     
     def check_ship_name(self, user_ship):
         SHIP_SYMBOLS = {"A", "B", "C", "D", "S"}
         return user_ship in SHIP_SYMBOLS
     
-    
     def check_orientation(self, user_orientation):
         ORIENTATIONS = {"V", "H"}
         return user_orientation in ORIENTATIONS
 
-
     def check_coord_format(self, user_coords):
+        """"Ensures coordinate input can be converted to ASCII"""
         if len(user_coords) != 2 and len(user_coords) != 3:
             return False
         if not user_coords[0].isalpha() or not user_coords[1:].isnumeric(): 
             return False
         return True
- 
 
     def check_input_format(self, user_input):
+        """Runs all checks on input format, but not necessarily input legality"""
         args = user_input.split()
         if len(args) != 3:
             return False
         ship_name, orientation, user_coords = args
         return (self.check_ship_name(ship_name) and self.check_orientation(orientation) and self.check_coord_format(user_coords))
 
-
     def convert_coordinates(self, user_input):
+        """Converts coordinate input to indices of a 2D array of shape (10, 10)"""
         internal_x = ord(user_input[0]) - ord('A')
         internal_y = int(user_input[1]) - 1 if len(user_input) == 2 else int(user_input[1:]) - 1
         return internal_x, internal_y
     
-    
     def check_coord_bounds(self, x, y):
+        """Checks that coordinates, but not necessarily placement, are within bounds"""
         lower_bound, upper_bound = 0, 9
         return (lower_bound <= x <= upper_bound) and (lower_bound <= y <= upper_bound)
-        
     
     def get_placement(self, user_input: str):
+        """Encapsulates all placement information in Placement object"""
         ship_name, orientation, user_coords = user_input.split()
         internal_x, internal_y = self.convert_coordinates(user_coords)
         ship_length = self.player1.get_ship_data(ship_name).get_length()
         return Placement(name=ship_name, x=internal_x, y=internal_y, length=ship_length, orientation=orientation)
-
     
     def placement_in_bounds(self, placement: Placement):
+        """Checks ship remains within bounds when placed"""
         _, x, y, length, orientation = placement
         if (orientation == 'V') and (x + length > 10):
             return False
@@ -209,33 +189,15 @@ class Engine:
             return False
         return True
 
-    
     def valid_placement(self, placement, player: Player):
+        """Ensures a placement is legal"""
         return (
             self.placement_in_bounds(placement) and 
             player.check_nonoverlap(placement) and 
             player.ship_available(placement)
         )
-    
-    
-    def run_placement_phase(self):
-        SHIPS_PER_PLAYER = 7
-        ships_placed = 0
-        while ships_placed < SHIPS_PER_PLAYER * 2:            
-            self.print_placement_instructions()
-            curr_player = self.player1 if ships_placed < SHIPS_PER_PLAYER else self.player2
-            user_input = self.prompt_ship_placement(curr_player)
-            if self.check_input_format(user_input):
-                placement = self.get_placement(user_input)
-                is_valid = self.valid_placement(placement, curr_player)
-                if is_valid:                    
-                    curr_player.place_ship(placement)
-                    ships_placed += 1
-                else:
-                    print("Illegal placement. Please try again.")
-            os.system('cls' if os.name == 'nt' else 'clear') # Clears terminal output                
-            
             
     def check_game_end(self):
+        """Returns true when a player has been hit HITS_POSSIBLE number of times"""
         HITS_POSSIBLE = 15 # Sum of lengths of each ship in a player's inventory
-        return (self.player1.get_hits_taken() == HITS_POSSIBLE) or (self.player2.get_hits_taken() == HITS_POSSIBLE)
+        return (self.player1.get_hits_received() == HITS_POSSIBLE) or (self.player2.get_hits_received() == HITS_POSSIBLE)
