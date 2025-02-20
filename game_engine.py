@@ -131,7 +131,7 @@ class Player:
         opponent_placements = opponent.get_player_board()
         if opponent_placements[x][y] == '1':
             opponent.inc_hits()
-            opponent.receive_hit()
+            opponent.receive_hit(x, y)
             self.opponent_board[x][y] = "X"
         elif opponent_placements[x][y] == '-':
             self.opponent_board[x][y] = "O"
