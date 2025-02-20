@@ -65,7 +65,7 @@ class TestBattleshipGame(unittest.TestCase):
         """Test an attack that misses the opponent's ship."""
         # Player 2 has no ships placed yet
         self.player1.attack(self.player2, 0, 0)
-        self.assertEqual(self.player1.get_opponent_board()[0][0], "O", "Missed attack should be marked with 'O'.")
+        self.assertEqual(self.player1.get_hits_misses()[0][0], "O", "Missed attack should be marked with 'O'.")
 
 
     def test_attack_on_same_spot_multiple_times(self):
