@@ -1,3 +1,5 @@
-CLI Battleship
+### CLI-Based Battleship
 
-Simply run `python main.py` and following the prompt instructions.
+A pass-and-play CLI-based game of Battleship.
+
+Simply run `python main.py` and follow the prompt instructions.
